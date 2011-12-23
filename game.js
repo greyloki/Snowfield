@@ -18,40 +18,6 @@ var clear = function(){
 }
 
 //--------------------------------------------------
-// CIRCLES
-//--------------------------------------------------
-
-var howManyCircles = 0, circles = [];
-
-for (var i = 0; i < howManyCircles; i++){
-    circles.push([Math.random() * width, Math.random() * height, Math.random() * 100, Math.random() / 2]);        
-}
-
-var DrawCircles = function(){
-    for (var i = 0; i < howManyCircles; i++) {
-        ctx.fillStyle = 'rgba(255, 255, 255, ' + circles[i][3] + ')';
-        ctx.beginPath();
-        ctx.arc(circles[i][0], circles[i][1], circles[i][2], 0, Math.PI * 2, true);
-        ctx.closePath();
-        ctx.fill();
-    }
-};
-
-var MoveCircles = function(e){
-    for (var i = 0; i < howManyCircles; i++) {
-        if (circles[i][1] - circles[i][2] > height) {
-            circles[i][0] = Math.random() * width;
-            circles[i][2] = Math.random() * 100;
-            circles[i][1] = 0 - circles[i][2];
-            circles[i][3] = Math.random() / 2;
-        }
-        else {
-            circles[i][1] += e;
-        }
-    }
-};
-
-//--------------------------------------------------
 // PLAYER
 //--------------------------------------------------
 
@@ -78,6 +44,7 @@ var player = new (function(){
     that.isLeft = false;
     that.isRight = false;
     that.jumpSpeed = 0;
+    that.jumpMax = 15;
     that.fallSpeed = 0;
     that.moveSpeed = 5;
 
@@ -102,6 +69,13 @@ var player = new (function(){
                 case "stopRight":
                     that.isRight = false;  
                     break;
+                
+                case "stopFalling":
+                    that.isFalling = false;
+                    that.isJumping = false;
+                    that.fallSpeed = 0;
+                    that.jumpSpeed = 0;
+                    break;
 
                 
                 case "Jump":
@@ -109,7 +83,7 @@ var player = new (function(){
                         console.log("Jump!");
                         that.fallSpeed = 0;
                         that.isJumping = true;
-                        that.jumpSpeed = 17;
+                        that.jumpSpeed = that.jumpMax;
                     }
                     break;
                 
@@ -132,7 +106,9 @@ var player = new (function(){
         if (that.isFalling){
             if (that.Y < height - that.height) {
                 that.Y += that.fallSpeed;
-                that.fallSpeed++;
+                if(that.fallSpeed <= that.jumpMax){
+                    that.fallSpeed++;    
+                }
             } else {
                 that.isFalling = false;
                 that.fallSpeed = 0;
@@ -155,7 +131,11 @@ var player = new (function(){
             }              
         }
         
-        
+        if(that.isJumping || that.isFalling){
+                that.image.src = "greenbox.png";
+        }else{
+                that.image.src = "blackbox.png";
+        }
         
         
         
@@ -216,7 +196,7 @@ document.onkeyup = function(e){
 // PLATFORMS
 //--------------------------------------------------
 
-var nrOfPlatforms = 0,
+var nrOfPlatforms = 5,
 platforms = [],
 platformWidth = 70,
 platformHeight = 20;
@@ -226,18 +206,11 @@ var Platform = function(x, y, type){
 
     that.firstColor = '#FF8C00';
     that.secondColor = '#EEEE00';
+   
     that.onCollide = function(){
-        player.fallStop();
+        player.actions.push("stopFalling");
+        console.log("Collision");
     };
-
-    if (type === 1) {
-        that.firstColor = '#AADD00';
-        that.secondColor = '#698B22';
-        that.onCollide = function(){
-            player.fallStop();
-            player.jumpSpeed = 50;
-        };
-    }
 
 
 
@@ -261,11 +234,6 @@ var generatePlatforms = function(){
     var position = 0, type;
     for (var i = 0; i < nrOfPlatforms; i++) {
         type = ~~(Math.random()*5);
-        if (type == 0){
-            type = 1;
-        }else{
-            type = 0;
-        }
         platforms[i] = new Platform(Math.random() * (width - platformWidth), position, type);
         if (position < height - platformHeight){
             position += ~~(height / nrOfPlatforms);
@@ -293,11 +261,7 @@ var checkCollision = function(){
 
 var GameLoop = function(){
     clear();        //Draw background box
-    //MoveCircles(5);
-    //DrawCircles();
-/*    
-  
-*/    
+ 
     platforms.forEach(function(platform){   //draw all the platforms
         platform.draw();
     });
