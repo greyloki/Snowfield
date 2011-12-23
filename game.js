@@ -132,12 +132,10 @@ var player = new (function(){
         }
         
         if(that.isJumping || that.isFalling){
-                that.image.src = "greenbox.png";
+            that.image.src = "greenbox.png";
         }else{
-                that.image.src = "blackbox.png";
+            that.image.src = "blackbox.png";
         }
-        
-        
         
         try {
             ctx.drawImage(that.image, 0, that.height * that.actualFrame, that.width, that.height, that.X, that.Y, that.width, that.height);
@@ -214,18 +212,18 @@ var Platform = function(x, y, type){
 
 
 
-that.x = ~~ x;
-that.y = y;
-that.type = type;
+    that.x = ~~ x;
+    that.y = y;
+    that.type = type;
 
-that.draw = function(){
-    ctx.fillStyle = 'rgba(255, 255, 255, 1)';
-    var gradient = ctx.createRadialGradient(that.x + (platformWidth/2), that.y + (platformHeight/2), 5, that.x + (platformWidth/2), that.y + (platformHeight/2), 45);
-    gradient.addColorStop(0, that.firstColor);
-    gradient.addColorStop(1, that.secondColor);
-    ctx.fillStyle = gradient;
-    ctx.fillRect(that.x, that.y, platformWidth, platformHeight);
-};
+    that.draw = function(){
+        ctx.fillStyle = 'rgba(255, 255, 255, 1)';
+        var gradient = ctx.createRadialGradient(that.x + (platformWidth/2), that.y + (platformHeight/2), 5, that.x + (platformWidth/2), that.y + (platformHeight/2), 45);
+        gradient.addColorStop(0, that.firstColor);
+        gradient.addColorStop(1, that.secondColor);
+        ctx.fillStyle = gradient;
+        ctx.fillRect(that.x, that.y, platformWidth, platformHeight);
+    };
 
     return that;
 };//end var Platform
