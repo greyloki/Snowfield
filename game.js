@@ -17,6 +17,21 @@ var clear = function(){
     ctx.fill();
 }
 
+var Point = function(x,y){
+    this.x = x;
+    this.y = y;
+}
+
+var Rect = function(x,y,w,h){
+    this.x = x;
+    this.y = y;
+    this.w = w; //width
+    this.h = h; //height
+    this.r = this.x+this.w; //right side
+    this.b = this.y+this.h; //bottom
+}
+
+
 //--------------------------------------------------
 // PLAYER
 //--------------------------------------------------
@@ -33,10 +48,36 @@ var player = new (function(){
     that.X = 0;
     that.Y = 0;
     that.actions = [];
+    that.TL = [0,0];
+    that.TM = [0,0];
+    that.TR = [0,0];
+    that.CL = [0,0];
+    that.CR = [0,0];
+    that.BL = [0,0];
+    that.BM = [0,0];
+    that.BR = [0,0];
 
     that.setPosition = function(x, y){  //sets location
         that.X = x;
         that.Y = y;
+    }
+    
+    that.setPoints = function(){
+        that.TL = [that.X,                  that.Y];
+        that.TM = [that.X+(that.width/2),   that.Y];
+        that.TR = [that.X+that.width,       that.Y];
+        
+        that.CL = [that.X,                  that.Y+(that.height/2)];
+        that.CR = [that.X+that.width,       that.Y+(that.height/2)];
+        
+        that.BL = [that.X,                  that.Y+that.height];
+        that.BM = [that.X+(that.width/2),   that.Y+that.height];
+        that.BR = [that.X+that.width,       that.Y+that.height];
+        console.log(that.TL+" : "+that.TM+" : "+that.TR);
+        console.log(that.CL+" : 000,000 : "+that.CR);
+        console.log(that.BL+" : "+that.BM+" : "+that.BR);
+        console.log("\n");
+        
     }
 
     that.isJumping = false;
@@ -47,6 +88,7 @@ var player = new (function(){
     that.jumpMax = 15;
     that.fallSpeed = 0;
     that.moveSpeed = 5;
+    that.isColliding = false;
 
     that.interval = 0;
     that.draw = function(){ //this function gets called each frame
@@ -70,10 +112,14 @@ var player = new (function(){
                     that.isRight = false;  
                     break;
                 
+                case "collide":
+                    that.isColliding = true;
+                    break;
+                
                 case "stopFalling":
                     that.isFalling = false;
                     that.isJumping = false;
-                    that.fallSpeed = 0;
+                    //that.fallSpeed = 0;
                     that.jumpSpeed = 0;
                     break;
 
@@ -81,7 +127,7 @@ var player = new (function(){
                 case "Jump":
                     if (!that.isJumping && !that.isFalling) {   //on the ground and you just pressed jump
                         console.log("Jump!");
-                        that.fallSpeed = 0;
+                        //that.fallSpeed = 0;
                         that.isJumping = true;
                         that.jumpSpeed = that.jumpMax;
                     }
@@ -92,31 +138,31 @@ var player = new (function(){
                     break;
             }//end action switch
             
-        }
+        }//end loop
+            
         if (that.isJumping){
             that.Y -= that.jumpSpeed;
             that.jumpSpeed--;  
             if (that.jumpSpeed == 0) {  
                 that.isJumping = false;  
-                that.isFalling = true;  
+                //that.isFalling = true;  
                 that.fallSpeed = 1;  
             }  
-        }
-    
-        if (that.isFalling){
+        }else{
             if (that.Y < height - that.height) {
                 that.Y += that.fallSpeed;
                 if(that.fallSpeed <= that.jumpMax){
                     that.fallSpeed++;    
                 }
-            } else {
-                that.isFalling = false;
+            } else {    //stops at the ground
+                //that.isFalling = false;
                 that.fallSpeed = 0;
-            }  
+            }              
         }
         
         if (that.isLeft){
             if( (that.X-that.moveSpeed) > 0  ){ //if this not land us left of the wall
+                //if( CheckNewCollision(new Point(), new Rect()  ))
                 that.X -= that.moveSpeed;
             }else{
                 that.X = 0;
@@ -158,6 +204,10 @@ var player = new (function(){
 
 player.setPosition(~~((width-player.width)/2), ~~((height - player.height)));   //starting position TODO: Move this
 
+qwer = new Point(5,6);
+console.log(qwer);
+
+
 //--------------------------------------------------
 // KEYS
 //--------------------------------------------------
@@ -173,6 +223,10 @@ document.onkeydown = function(e){
         player.actions.push('moveRight');
     }else if(actualkey=='W'){
         player.actions.push("Jump");
+    }else if(actualkey=='Q'){
+        player.setPoints();
+    }else if(actualkey=='E'){
+      
     }
 }
 
@@ -194,7 +248,7 @@ document.onkeyup = function(e){
 // PLATFORMS
 //--------------------------------------------------
 
-var nrOfPlatforms = 5,
+var nrOfPlatforms = 1,
 platforms = [],
 platformWidth = 70,
 platformHeight = 20;
@@ -229,6 +283,7 @@ var Platform = function(x, y, type){
 };//end var Platform
 
 var generatePlatforms = function(){
+/*
     var position = 0, type;
     for (var i = 0; i < nrOfPlatforms; i++) {
         type = ~~(Math.random()*5);
@@ -237,6 +292,8 @@ var generatePlatforms = function(){
             position += ~~(height / nrOfPlatforms);
         }
     }
+ */
+    platforms[0]=new Platform(0,height-platformHeight-5,0);
 }();
 
 //--------------------------------------------------
@@ -246,16 +303,25 @@ var generatePlatforms = function(){
 var checkCollision = function(){
     platforms.forEach(function(e,  ind){
     if (
-        (player.isFalling) &&
+        //(player.isFalling) &&
         (player.X < e.x + platformWidth) &&
         (player.X + player.width > e.x) &&
         (player.Y + player.height > e.y) &&
         (player.Y + player.height < e.y + platformHeight)
     ) {
-        e.onCollide();
+        player.actions.push("collide");
+        //e.onCollide();
     }
 })
 }
+
+var CheckNewCollision = function(p,r){
+    return (
+            (r.x <= p.x) && (p.x <= (r.x + r.w ))
+            )
+    && ((r.y <= p.y) && (p.y <= (r.y + r.h)));
+}
+
 
 var GameLoop = function(){
     clear();        //Draw background box
